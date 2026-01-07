@@ -1,0 +1,1578 @@
+{
+  "name": "💻 AI Agent:  TrackerHero_Mind 🧠",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "Done! Congratulations on your new bot. You will find it at t.me/ProposalTrackerHeroBot. You can now add a description, about section and profile picture for your bot, see /help for a list of commands. By the way, when you've finished creating your cool bot, ping our Bot Support if you want a better username for it. Just make sure the bot is fully operational before you do this.\n\nUse this token to access the HTTP API:\n8385603641:AAHt_NgrI-22De5qQjANnQF3hhHhDbH5wwU\nKeep your token secure and store it safely, it can be used by anyone to control your bot.\n\nFor a description of the Bot API, see this page: https://core.telegram.org/bots/api",
+        "height": 320,
+        "width": 420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        -176
+      ],
+      "id": "983687dc-39d5-4cc2-8636-0386aea018c0",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text || $json.data.text}}",
+        "options": {
+          "systemMessage": "=## AI Assistant Role: Specialized Data Retrieval Agent\n\n### Knowledge Source\n- **Primary Source**: Supabase Vector Store (used for all information retrieval).  \n- **Secondary Source**: None. Do **not** fall back to general knowledge.  \n\n### Before workflow rules do quick check\n1. If user asks for a chart, just reply with \"Here is your chart :)\"\n2. If user asks to list all, use the supabase vector store and list all of the items related.\n\n### Workflow Rules\n1. **Search**  \n   - For every user query, always query the **Supabase Vector Store** for relevant context. \n\n2. **Synthesize and Answer**  \n   - Use only the retrieved context to construct responses.  \n   - Prioritize vector store information above all else.  \n\n3. **Knowledge Limitations**  \n   - If **no relevant information** is found:  \n     - Explicitly state: *\"The answer is not available in the knowledge base.\"*  \n   - Do not invent, assume, or fabricate information.  \n\n4. **Conversation Rules**  \n   - The assistant may engage in natural conversation with the user.  \n   - If user input is unclear or ambiguous, ask clarifying questions.  \n\n### Response Format\n- Present answers in a clear and organized structure (e.g., bullet points, tables, or sections).  \n- Always make it explicit when content is from the vector store vs. when no content is available.  \n"
+        }
+      },
+      "id": "a3b2a205-9287-4d1e-93fe-301ff660672d",
+      "name": "Data Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        352,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9a75cef2-dcc2-4841-a9c4-45c11263fbec",
+              "name": "LatestAnswer",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2672,
+        544
+      ],
+      "id": "03fa0877-3a19-47c3-8fc4-07847531a00c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        2304,
+        832
+      ],
+      "id": "4ea499a9-bf2c-430e-b40e-2a5d29c289d2",
+      "name": "Calculator1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        832
+      ],
+      "id": "11ebe2b1-77ba-47c4-8557-5794262d3e43",
+      "name": "Think1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the data to be revised/checked: {{ $('Edit Fields').item.json.LatestAnswer }}\n\nHere is the human feedback:{{ $json.data.text }}",
+        "options": {
+          "systemMessage": "=You are an expert editor and fact-checker AI. Your mission is to perfect a piece of text by checking it against our official knowledge base (stored in a Supabase vector store). You will add any new, missing information you find and then polish the final result.\n\nFollow these steps precisely:\n\n**Step 1: Review the Current Text.**\nCarefully read the text you are given.\n\n**Step 2: Find What's Missing.**\nCompare the text to the up-to-date information provided from the Supabase knowledge base. Identify all relevant facts from the knowledge base that are NOT yet included in the text.\n\n**Step 3: Add the New Information.**\nIntelligently merge the missing facts into the text. Make sure it reads naturally and is easy to understand. If the knowledge base contradicts the text, you MUST correct the text to match the knowledge base.\n\n**Step 4: Final Polish.**\nRead through the complete, updated text one last time. Correct any grammatical errors, improve the flow, and ensure it is as clear, accurate, and optimized as possible.\n\n**Your Critical Rules:**\n- **Source of Truth:** The Supabase data is ALWAYS correct.\n- **No Outside Info:** Only use the information from the original text and the Supabase store.\n- **Final Output:** Your response must ONLY be the complete, revised text. Do not write anything else."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        3504,
+        688
+      ],
+      "id": "3cc29a29-dab0-4dde-9a55-ce032aee7cb7",
+      "name": "Revision Agent"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to fetch all available documents, including the table schema if the file is a CSV or Excel file.",
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "document_metadata",
+          "mode": "list",
+          "cachedResultName": "document_metadata"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        640,
+        400
+      ],
+      "id": "e3fa1592-62a4-46e2-97c2-b0a0bf63d8b5",
+      "name": "List Documents2",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Given a file ID, fetches the text from the document.",
+        "operation": "executeQuery",
+        "query": "SELECT \n    string_agg(content, ' ') as document_text\nFROM documents\n  WHERE metadata->>'file_id' = $1\nGROUP BY metadata->>'file_id';",
+        "options": {
+          "queryReplacement": "={{ $fromAI('file_id') }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        800,
+        400
+      ],
+      "id": "7f0212c5-bd55-46d2-aee3-dad69b207507",
+      "name": "Get File Contents2",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Run a SQL query - use this to query from the document_rows table once you know the file ID you are querying. dataset_id is the file_id and you are always using the row_data for filtering, which is a jsonb field that has all the keys from the file schema given in the document_metadata table.\n\nExample query:\n\nSELECT AVG((row_data->>'revenue')::numeric)\nFROM document_rows\nWHERE dataset_id = '123';\n\nExample query 2:\n\nSELECT \n    row_data->>'category' as category,\n    SUM((row_data->>'sales')::numeric) as total_sales\nFROM dataset_rows\nWHERE dataset_id = '123'\nGROUP BY row_data->>'category';",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('sql_query') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        960,
+        400
+      ],
+      "id": "a40270f9-37e6-42d4-98c6-9881e27caca3",
+      "name": "Query Document Rows2",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1184,
+        544
+      ],
+      "id": "bdd138dc-2016-4f5c-955c-db38f4aaf58c",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "NAKu9mZt3vmJbjIl",
+          "name": "Open AI TrackerHero"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text || $json.data.text}}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a personal assistant who helps answer questions from a corpus of documents. \nThe documents are either text-based (Txt, Docs, extracted PDFs, etc.) or tabular data (CSVs or Excel).\n\nYou are given tools to:\n- Perform RAG using the 'documents' table\n- Look up documents in the 'document_metadata' table\n- Extract full text from a document\n- Query tabular files with SQL in the 'document_rows' table.\n\nAlways start by performing RAG unless the question requires a SQL query for tabular data \n(fetching sums, max/min, averages, etc., where RAG would be unreliable).  \nIf RAG doesn't help, check available documents, choose the relevant ones, and analyze them.\n\nAlways tell the user if you cannot find the answer. Never make up information.\n\n---\n\n### When the user requests a chart:\n**Return only a valid Chart.js v4 config** as **minified JSON**.  \nStrictly follow these rules:\n- **No markdown**\n- **No explanations**\n- **No trailing commas**\n- **No comments or functions/callbacks**\n- If uncertain, return this fallback:\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"Series\",\"data\":[1,2,3]}]},\"options\":{\"scales\":{\"y\":{\"beginAtZero\":true}}}}\n\nExample:\nInput → \"Show monthly revenue Jan–Apr: 1200, 1600, 900, 1800 (RM)\"\nOutput → {\"type\":\"line\",\"data\":{\"labels\":[\"Jan\",\"Feb\",\"Mar\",\"Apr\"],\"datasets\":[{\"label\":\"Revenue (RM)\",\"data\":[1200,1600,900,1800]}]},\"options\":{\"scales\":{\"y\":{\"beginAtZero\":true}}}}"
+        }
+      },
+      "id": "c4511289-e441-43f3-aec7-6fb8afc2eec3",
+      "name": "RAG AI Agent2",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        352,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -432,
+        704
+      ],
+      "id": "69d7d104-962b-43d7-bdcf-07809822a1d5",
+      "name": "Telegram Trigger2",
+      "webhookId": "957c8b09-c286-47d5-9c2a-d6f42b5381f4",
+      "credentials": {
+        "telegramApi": {
+          "id": "Zi8KDZf3BT07GJjz",
+          "name": "Devops TrackerHero Proposal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId ||  $('Telegram Trigger2').item.json.message.chat.id }}",
+        "contextWindowLength": 2
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        384
+      ],
+      "id": "141ec39f-c5f2-4fd4-a1b3-4a7de116e19a",
+      "name": "Postgres Chat Memory2",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "documents",
+        "toolDescription": "Use RAG to look up information in the knowledgebase.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 3,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        384
+      ],
+      "id": "85b84530-3948-4223-a32d-adc6be291809",
+      "name": "Supabase Vector Store3",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ilHEG1rOSBN6nddg",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendDocument",
+        "chatId": "={{ $('Telegram Trigger2').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1424,
+        -80
+      ],
+      "id": "4188da9d-8bad-4506-ab7d-2f0895937210",
+      "name": "Telegram4",
+      "webhookId": "2a106cd8-8ed2-4acb-9531-b5f25b20cf1b",
+      "credentials": {
+        "telegramApi": {
+          "id": "Zi8KDZf3BT07GJjz",
+          "name": "Devops TrackerHero Proposal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger2').item.json.message.from.id }}",
+        "text": "=Thanks for using me XD",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3520,
+        432
+      ],
+      "id": "1c6cc367-085e-4743-98d6-25354bcd2f06",
+      "name": "Telegram7",
+      "webhookId": "e52a3e09-0426-45d1-ba64-8428b1e265e4",
+      "credentials": {
+        "telegramApi": {
+          "id": "Zi8KDZf3BT07GJjz",
+          "name": "Devops TrackerHero Proposal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger2').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        800
+      ],
+      "id": "d07a33a4-27c7-4d31-97c7-ecf3c5b46f86",
+      "name": "Telegram8",
+      "webhookId": "788035c7-bea2-477a-bd96-5194321476c7",
+      "credentials": {
+        "telegramApi": {
+          "id": "Zi8KDZf3BT07GJjz",
+          "name": "Devops TrackerHero Proposal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.message.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Chart",
+              "description": "If user want visualize or something that can be see"
+            },
+            {
+              "category": "Summarize",
+              "description": "If use just want to summaries"
+            }
+          ]
+        },
+        "options": {
+          "fallback": "other"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        688
+      ],
+      "id": "639e01e9-6c46-4211-b161-66abbc9cb606",
+      "name": "Text Classifier2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        304,
+        400
+      ],
+      "id": "6029ad4e-c44b-4059-9476-fb082e3a6764",
+      "name": "OpenAI Chat Model8",
+      "credentials": {
+        "openAiApi": {
+          "id": "NAKu9mZt3vmJbjIl",
+          "name": "Open AI TrackerHero"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.chartUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        -80
+      ],
+      "id": "502eb8b0-6724-42f4-900e-d76e8f6739e7",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Expecting the Structured/Auto-fixed parser to put the config at items[0].json.output\nconst cfg = items[0].json.output;\n\n// 1) Basic shape checks + coercions\nif (!cfg || typeof cfg !== 'object') {\n  throw new Error('Chart config missing.');\n}\ncfg.type = cfg.type || 'bar';\ncfg.data = cfg.data || {};\ncfg.data.labels = Array.isArray(cfg.data.labels) ? cfg.data.labels.map(String) : [];\ncfg.data.datasets = Array.isArray(cfg.data.datasets) ? cfg.data.datasets : [];\n\n// 2) If labels empty but dataset exists with data length -> create labels 1..N\nif (cfg.data.labels.length === 0 && cfg.data.datasets[0]?.data?.length > 0) {\n  const n = cfg.data.datasets[0].data.length;\n  cfg.data.labels = Array.from({ length: n }, (_, i) => String(i + 1));\n}\n\n// 3) Coerce dataset data to numbers & trim/pad to labels length\ncfg.data.datasets = cfg.data.datasets.map(ds => {\n  const data = Array.isArray(ds.data) ? ds.data : [];\n  const asNum = data.map(v => Number(v)).filter(v => Number.isFinite(v));\n  const m = Math.min(asNum.length, cfg.data.labels.length);\n  return {\n    label: ds.label || 'Series',\n    data: asNum.slice(0, m)\n  };\n}).filter(ds => ds.data.length > 0);\n\n// 4) Final sanity\nif (cfg.data.labels.length === 0 || cfg.data.datasets.length === 0) {\n  // Minimal fallback to avoid QuickChart errors\n  cfg.type = 'bar';\n  cfg.data = {\n    labels: ['A','B','C'],\n    datasets: [{ label: 'Series', data: [1,2,3] }]\n  };\n  cfg.options = { scales: { y: { beginAtZero: true } } };\n}\n\n// Put back for the next node\nreturn [{ json: { output: cfg } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -64
+      ],
+      "id": "3429d7bc-9715-4d28-82fb-4e694df032d9",
+      "name": "Add a tiny validator/coercer before QuickChart (Code node)2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are given chart data in JSON format. Do not describe the chart type. Instead, analyze the values and provide 2–3 sentences of insight about the data. Focus on trends, comparisons, and what the numbers imply.\n\nChart Data:\nLabels: {{ $('RAG AI Agent2').item.json.output.data.labels }}\nValues: {{ $('RAG AI Agent2').item.json.output.data.datasets[0].data }}\n\nInstructions:\n- Identify the highest and lowest values and mention their labels.\n- Point out any noticeable pattern, imbalance, or trend.\n- Suggest what the insight means in practical terms (e.g., where performance is strong/weak, or where focus is needed).\n- Keep it concise (2–3 sentences).\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        2160,
+        544
+      ],
+      "id": "38e8c394-85b3-410f-92e5-bcae26706371",
+      "name": "Data insight Agent1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the Chart.js config from the AI response\nconst chartConfig = items[0].json.output;\n\n// Encode the config to embed in the QuickChart URL\nconst encodedConfig = encodeURIComponent(JSON.stringify(chartConfig));\n\n// Append QuickChart background color via the 'bkg' query parameter\nconst chartUrl = `https://quickchart.io/chart?c=${encodedConfig}&bkg=white`;\n\nreturn [\n  {\n    json: {\n      chartUrl\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        -64
+      ],
+      "id": "1cef6abb-46bc-4d29-a2f4-5f1e50b1ed36",
+      "name": "ChartUrl Code1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1760,
+        544
+      ],
+      "id": "c2fb9a2d-f4dc-429e-a52d-9018942683dc",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $('Telegram Trigger2').item.json.message.chat.id }}",
+        "message": "=Approve info?\n{{ $json.LatestAnswer }}",
+        "responseType": "freeText",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2864,
+        544
+      ],
+      "id": "3a577d66-3551-469d-8a75-187e55b25edd",
+      "name": "Telegram9",
+      "webhookId": "9e888608-60e3-4464-a1b0-19369fdc7672",
+      "credentials": {
+        "telegramApi": {
+          "id": "Zi8KDZf3BT07GJjz",
+          "name": "Devops TrackerHero Proposal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.data.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Approved",
+              "description": "=The data has been reviewed and acceptedas-is. The human explicitly or implicitly expresses approval, indicating that no changes are meeded.\n\nExample phrases include:\n\"Looks good, approve it.\"\n\n\"Yes, this is approved.\"\n\n\"I accept this.\"\n\n\"The data is correct, please proceed.\"\n\n\"Go ahead with this version.\"\n\n\"This has my approval.\"\n\n\"Accepted as-is.\""
+            },
+            {
+              "category": "Declined",
+              "description": "=The data has been reviewed, but the human requests modifications before it is sent like tweaks, removing parts, rewording, wrong data, need more data, etc. This could include suggested edits, rewording or major revisions.\n\nExample phrases include:\n\"Please change the second paragraph.\"\n\n\"This needs a few edits before we can send it.\"\n\n\"Can you revise this section?\"\n\n\"You need to fix the introduction.\"\n\n\"Let's make some adjustments to this.\"\n\n\"Please remove the last sentence.\"\n\n\"This needs to be reworded.\"\n\n\"No.\""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        3088,
+        544
+      ],
+      "id": "e11d7cf5-11b7-439c-bdd3-d501547e6753",
+      "name": "Revise User Answer1"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "documents",
+        "toolDescription": "Use RAG to look up information in the knowledgebase.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 3,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        3808,
+        1024
+      ],
+      "id": "83bf4f3c-ecf4-4e92-abfd-920c53f72afc",
+      "name": "Supabase Vector Store4",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ilHEG1rOSBN6nddg",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3904,
+        1200
+      ],
+      "id": "7d8adcf7-1571-40d3-a8da-d72b223dd854",
+      "name": "Embeddings OpenAI4",
+      "credentials": {
+        "openAiApi": {
+          "id": "2OePvXTzbSuVvlNG",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Summarization Generator",
+        "height": 600,
+        "width": 1440
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        208,
+        768
+      ],
+      "id": "3b6f5ad4-d89f-4a39-bbc9-07f982a4ca18",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        1120
+      ],
+      "id": "05a682a9-80b5-44b8-957c-8c6eb7d861ce",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "NAKu9mZt3vmJbjIl",
+          "name": "Open AI TrackerHero"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId ||  $('Telegram Trigger2').item.json.message.chat.id }}",
+        "contextWindowLength": 2
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        1120
+      ],
+      "id": "01911a08-bfcf-453b-b00d-9dd1f506f5bb",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to fetch all available documents, including the table schema if the file is a CSV or Excel file.",
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "document_metadata",
+          "mode": "list",
+          "cachedResultName": "document_metadata"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        608,
+        1152
+      ],
+      "id": "a274d5ba-618a-480d-a10c-1623500b4378",
+      "name": "List Documents",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Given a file ID, fetches the text from the document.",
+        "operation": "executeQuery",
+        "query": "SELECT \n    string_agg(content, ' ') as document_text\nFROM documents\n  WHERE metadata->>'file_id' = $1\nGROUP BY metadata->>'file_id';",
+        "options": {
+          "queryReplacement": "={{ $fromAI('file_id') }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        768,
+        1152
+      ],
+      "id": "22d7f52a-88f9-4165-81fa-e25cd6cafc51",
+      "name": "Get File Contents",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Run a SQL query - use this to query from the document_rows table once you know the file ID you are querying. dataset_id is the file_id and you are always using the row_data for filtering, which is a jsonb field that has all the keys from the file schema given in the document_metadata table.\n\nExample query:\n\nSELECT AVG((row_data->>'revenue')::numeric)\nFROM document_rows\nWHERE dataset_id = '123';\n\nExample query 2:\n\nSELECT \n    row_data->>'category' as category,\n    SUM((row_data->>'sales')::numeric) as total_sales\nFROM dataset_rows\nWHERE dataset_id = '123'\nGROUP BY row_data->>'category';",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('sql_query') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        928,
+        1152
+      ],
+      "id": "349e61ad-8067-482d-a020-67a574a8b7fd",
+      "name": "Query Document Rows",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1168,
+        1184
+      ],
+      "id": "f92b0137-41c2-440b-bb30-0d9ab347ce93",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "NAKu9mZt3vmJbjIl",
+          "name": "Open AI TrackerHero"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "documents",
+        "toolDescription": "Use RAG to look up information in the knowledgebase.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 3,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        1024
+      ],
+      "id": "eea0d711-5c37-4bb1-a33a-63e0cee12380",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ilHEG1rOSBN6nddg",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Chart Generator",
+        "height": 820,
+        "width": 1440,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -96
+      ],
+      "id": "b21b1599-4dc6-46a8-8d9d-da36ba394a3c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        864
+      ],
+      "id": "7af0f821-8671-4f4e-a29b-ca46606b89d6",
+      "name": "OpenAI Chat Model9",
+      "credentials": {
+        "openAiApi": {
+          "id": "NAKu9mZt3vmJbjIl",
+          "name": "Open AI TrackerHero"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId ||  $('Telegram Trigger2').item.json.message.chat.id }}",
+        "contextWindowLength": 2
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        2160,
+        800
+      ],
+      "id": "b5952f7f-21d3-4f4c-a814-e20f1b0c0aee",
+      "name": "Postgres Chat Memory3",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId ||  $('Telegram Trigger2').item.json.message.chat.id }}",
+        "contextWindowLength": 2
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        3184,
+        1024
+      ],
+      "id": "bc88e54e-9155-4846-b47c-884204a9aa75",
+      "name": "Postgres Chat Memory4",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to fetch all available documents, including the table schema if the file is a CSV or Excel file.",
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "document_metadata",
+          "mode": "list",
+          "cachedResultName": "document_metadata"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        3344,
+        1024
+      ],
+      "id": "0f390f1a-68bc-40e0-8807-32ec6b412184",
+      "name": "List Documents3",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Given a file ID, fetches the text from the document.",
+        "operation": "executeQuery",
+        "query": "SELECT \n    string_agg(content, ' ') as document_text\nFROM documents\n  WHERE metadata->>'file_id' = $1\nGROUP BY metadata->>'file_id';",
+        "options": {
+          "queryReplacement": "={{ $fromAI('file_id') }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        3520,
+        1024
+      ],
+      "id": "cd108dcd-731d-4dc7-a080-e42d416d0547",
+      "name": "Get File Contents3",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Run a SQL query - use this to query from the document_rows table once you know the file ID you are querying. dataset_id is the file_id and you are always using the row_data for filtering, which is a jsonb field that has all the keys from the file schema given in the document_metadata table.\n\nExample query:\n\nSELECT AVG((row_data->>'revenue')::numeric)\nFROM document_rows\nWHERE dataset_id = '123';\n\nExample query 2:\n\nSELECT \n    row_data->>'category' as category,\n    SUM((row_data->>'sales')::numeric) as total_sales\nFROM dataset_rows\nWHERE dataset_id = '123'\nGROUP BY row_data->>'category';",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('sql_query') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        3680,
+        1024
+      ],
+      "id": "e2152c76-a1a3-49f3-ad0f-899da78dbaaf",
+      "name": "Query Document Rows3",
+      "credentials": {
+        "postgres": {
+          "id": "jRXjdIEW5LryoxfX",
+          "name": "PROJECT-CCO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3040,
+        1024
+      ],
+      "id": "cc57eb1e-bc59-4a62-950c-8d00b7cfdbd6",
+      "name": "OpenAI Chat Model10",
+      "credentials": {
+        "openAiApi": {
+          "id": "NAKu9mZt3vmJbjIl",
+          "name": "Open AI TrackerHero"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3008,
+        688
+      ],
+      "id": "a248e22c-a95f-4332-a773-641b386bdde0",
+      "name": "OpenAI Chat Model11",
+      "credentials": {
+        "openAiApi": {
+          "id": "NAKu9mZt3vmJbjIl",
+          "name": "Open AI TrackerHero"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2032,
+        800
+      ],
+      "id": "44d463ed-ffbc-4269-af99-22fd134de63c",
+      "name": "OpenAI Chat Model12",
+      "credentials": {
+        "openAiApi": {
+          "id": "NAKu9mZt3vmJbjIl",
+          "name": "Open AI TrackerHero"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"type\": \"line\",\n  \"data\": {\n    \"labels\": [\"April\", \"May\", \"June\", \"July\", \"August\"],\n    \"datasets\": [\n      {\n        \"label\": \"Interest Rate (%)\",\n        \"data\": [3.5, 3.8, 4.1, 4.3, 4.7],\n        \"borderColor\": \"blue\",\n        \"fill\": false\n      }\n    ]\n  },\n  \"options\": {\n    \"title\": {\n      \"display\": true,\n      \"text\": \"Interest Rates (Apr–Aug)\"\n    }\n  }\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1264,
+        240
+      ],
+      "id": "a3628a6d-c6d7-49a5-ae32-e29173903d44",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "8daea54c-1abe-4f69-a3b6-bdbee59e07fe",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1968,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 1740,
+        "width": 4640,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        -176
+      ],
+      "id": "5b25cca9-c98e-45fe-847b-4542a3e2b4ee",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Data Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram8",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Telegram9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Data insight Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Data insight Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revision Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Documents2": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File Contents2": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Document Rows2": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store3",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Add a tiny validator/coercer before QuickChart (Code node)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger2": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG AI Agent2",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store3": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier2": {
+      "main": [
+        [
+          {
+            "node": "RAG AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Data Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Data Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model8": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Telegram4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add a tiny validator/coercer before QuickChart (Code node)2": {
+      "main": [
+        [
+          {
+            "node": "ChartUrl Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data insight Agent1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ChartUrl Code1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram9": {
+      "main": [
+        [
+          {
+            "node": "Revise User Answer1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revise User Answer1": {
+      "main": [
+        [
+          {
+            "node": "Telegram7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Revision Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store4": {
+      "ai_tool": [
+        [
+          {
+            "node": "Revision Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI4": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store4",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Data Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Data Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Documents": {
+      "ai_tool": [
+        [
+          {
+            "node": "Data Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File Contents": {
+      "ai_tool": [
+        [
+          {
+            "node": "Data Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Document Rows": {
+      "ai_tool": [
+        [
+          {
+            "node": "Data Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Data Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model9": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory3": {
+      "ai_memory": [
+        [
+          {
+            "node": "Data insight Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory4": {
+      "ai_memory": [
+        [
+          {
+            "node": "Revision Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Document Rows3": {
+      "ai_tool": [
+        [
+          {
+            "node": "Revision Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File Contents3": {
+      "ai_tool": [
+        [
+          {
+            "node": "Revision Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Documents3": {
+      "ai_tool": [
+        [
+          {
+            "node": "Revision Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model10": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Revision Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model11": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Revise User Answer1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model12": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Data insight Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "RAG AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Data insight Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "af6c9f12-2b95-4d48-b2a8-a0f9a1e2596e",
+  "meta": {
+    "instanceId": "e087cf0658b50964fc9be03d4ce6f43012cbc290bbcf2da0b4b4961cbf8408ce"
+  },
+  "id": "f5Tz8gUk8gPqXpau",
+  "tags": [
+    {
+      "name": "RAG",
+      "id": "9Bq6ZzlzXBMkhd8L",
+      "updatedAt": "2026-01-07T07:34:20.872Z",
+      "createdAt": "2026-01-07T07:34:20.872Z"
+    }
+  ]
+}
